@@ -1,63 +1,43 @@
 version: '3'
 services:
-  #PHP Service
-  mam-app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: mom21islove/mam-app
-    container_name: mam-app
-    restart: unless-stopped
-    tty: true
-    environment:
-      SERVICE_NAME: mam-app
-      SERVICE_TAGS: dev
+ # The Application
+  prod-app:
+    image: mom21islove/prod-app
     working_dir: /var/www
+    container_name: prod-app
     volumes:
-      - ./:/var/www
-      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
-    networks:
-      - app-network
-
-  #Nginx Service
-  webserver:
-    image: nginx:alpine
-    container_name: mam-webserver
-    restart: unless-stopped
-    tty: true
-    ports:
-      - "9093:80"
-      - "9052:443"
-    volumes:
-      - ./:/var/www
-      - ./nginx/conf.d/:/etc/nginx/conf.d/
-    networks:
-      - app-network
-
-  #MySQL Service
-  mam-app-db:
-    image: mysql:5.7.22
-    container_name: mam-app-db
-    restart: unless-stopped
-    tty: true
-    ports:
-      - "3308:3306"
+      - /var/www/storage
+    env_file: '.env.prod'
     environment:
-      MYSQL_DATABASE: mam_maintenance
-      MYSQL_ROOT_PASSWORD: ab@21077
-      SERVICE_TAGS: mam-app-db
-      SERVICE_NAME: mamappdb
-    volumes:
-      - dbdata:/var/lib/mysql/
-      - ./mysql/my.cnf:/etc/mysql/my.cnf
+      - "DB_HOST=prod-db"
     networks:
-      - app-network
-
+      - app-network 
+#The Web Server
+  web:
+    image: mom21islove/prod-web
+    ports:
+      - 9881:80
+      - 748:443
+    container_name: prod-web
+    networks:
+      - app-network 
+#The Database
+  prod-db:
+    image: mysql:5.7.22
+    container_name: prod-db
+    volumes:
+      - dbdata:/var/lib/mysql
+    environment:
+      - "MYSQL_DATABASE=homestead"
+      - "MYSQL_USER=homestead"
+      - "MYSQL_PASSWORD=secret"
+      - "MYSQL_ROOT_PASSWORD=secret"
+    networks:
+      - app-network 
 #Docker Networks
 networks:
   app-network:
     driver: bridge
-#Volumes
+#Docker Volumes
 volumes:
   dbdata:
-    driver: local
